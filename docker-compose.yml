@@ -1,0 +1,40 @@
+services:
+  menu-analysis:
+    build:
+      context: ./menu-analysis
+      dockerfile: Dockerfile
+    DB_DATABASE: ${DB_DATABASE}
+    DB_USERNAME: ${DB_USERNAME}
+    DB_PASSWORD: ${DB_PASSWORD}
+    DB_HOSTNAME: ${DB_HOSTNAME}
+    DB_PORT: ${DB_PORT}
+    USER_GEMINI_API_ENCRYPTION_KEY: ${USER_GEMINI_API_ENCRYPTION_KEY}
+
+  telegram-bot:
+    build:
+      context: ./telegram-bot
+      dockerfile: Dockerfile
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOSTNAME: ${DB_HOSTNAME}
+      DB_PORT: ${DB_PORT}
+      USER_GEMINI_API_ENCRYPTION_KEY: ${USER_GEMINI_API_ENCRYPTION_KEY}
+
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    ports:
+      - "5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data/18
+      - ./database/:/docker-entrypoint-initdb.d/
+
+volumes:
+  pg_data:

@@ -1,0 +1,92 @@
+import asyncio
+import json
+import logging
+from contextlib import asynccontextmanager
+from typing import List, Union
+
+from fastapi import FastAPI, File, Form, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+
+from .db_connection import close_db_pool, init_db_pool, get_db_pool
+from .user_data_handler import get_api_key
+
+# Use the provided logger configuration
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("uvicorn")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db_pool()
+    yield
+    await close_db_pool()
+
+
+app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.post("/analyze")
+async def analyze_menu(file: UploadFile = File(...), metadata: str = Form(...)):
+    """
+    Analyzes a menu image for allergens.
+
+    Accepts a multipart/form-data request with:
+    - "file": The menu image.
+    - "metadata": A JSON string containing a list of allergies.
+      e.g., '{"allergic_list": ["peanuts", "shrimp"]}'
+    """
+    # The 'metadata' will be a JSON string, so we parse it.
+    metadata_dict = json.loads(metadata)
+    allergic_list = metadata_dict.get("allergic_list", [])
+
+    # The 'file' is an UploadFile object. We can read its content.
+    image_bytes = await file.read()
+
+    platform = metadata_dict.get("platform")
+    platform_user_id = metadata_dict.get("platform_user_id")
+    if not platform or not platform_user_id:
+        raise ValueError("Missing platform or platform_user_id in metadata")
+
+    # Get the user's API key from the database.
+    api_key = await get_api_key(platform, platform_user_id)
+    if not api_key:
+        raise Exception("No API key found for user")
+
+    # --- Placeholder for actual analysis logic ---
+    # In a real application, you would:
+    # 1. Use OCR to extract text from image_bytes.
+    # 2. Use an LLM to analyze the text against the allergic_list.
+    # 3. Generate a structured report.
+    # ---------------------------------------------
+
+    # For now, return a test dictionary as requested.
+    # The client code in send_anaylsis.py expects a key "llm_3_output".
+    test_response = {
+        "llm_3_output": "This is a test response from the menu-analysis service.",
+        "metadata": metadata_dict,
+        "debug_info": {
+            "received_allergies": allergic_list,
+            "received_file_size": len(image_bytes),
+            "received_filename": file.filename,
+            "received_content_type": file.content_type,
+            "received_api_key": api_key,
+        },
+    }
+
+    logger.info(f"Received analysis request with allergies: {allergic_list}")
+
+    return test_response
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)

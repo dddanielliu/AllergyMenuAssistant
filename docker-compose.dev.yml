@@ -1,0 +1,36 @@
+name: AllergyMenuAssistant-dev
+services:
+  menu-analysis:
+    build:
+      context: ./menu-analysis
+      dockerfile: Dockerfile
+      target: dev
+    env_file: .env
+    stdin_open: true
+    volumes:
+      - ./menu-analysis:/menu-analysis/
+
+  telegram-bot:
+    build:
+      context: ./telegram-bot
+      dockerfile: Dockerfile
+      target: dev
+    env_file: .env
+    stdin_open: true
+    volumes:
+      - ./telegram-bot:/telegram-bot/
+
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    ports:
+      - "5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data/18
+      - ./database/:/docker-entrypoint-initdb.d/
+
+volumes:
+  pg_data:
