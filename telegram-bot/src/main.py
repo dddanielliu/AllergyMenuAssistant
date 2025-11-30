@@ -237,6 +237,8 @@ def main() -> None:
     application = (
         ApplicationBuilder()
         .token(TELEGRAM_TOKEN)
+        .read_timeout(30)
+        .write_timeout(30)
         .concurrent_updates(True)
         .post_init(init_db_pool)
         .post_shutdown(close_db_pool)
