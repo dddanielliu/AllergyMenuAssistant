@@ -41,7 +41,9 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🔄 過敏資訊可隨時設定與更新\n"
         "🗂 支援多重過敏源比對（如花生、乳製品、海鮮、蛋類等）\n"
         "\n"
-        "🧠 本系統透過 OCR + LLM 組合分析，提供快速、直覺、個人化的菜單過敏判定。"
+        "🧠 本系統透過 OCR + LLM 組合分析，提供快速、直覺、個人化的菜單過敏判定。\n\n"
+        "首先請您用 /setallergy 設定您的過敏原，\n"
+        "並利用 /setapikey 設定您的 Gemini API Key，以處理您的請求"
     )
 
     await set_api_key(update.effective_user.id, None)
@@ -59,8 +61,8 @@ async def dev_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def setapitoken_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["in_command"] = "setapitoken_command"
+async def setapikey_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["in_command"] = "setapikey_command"
     await update.message.reply_text(
         "請輸入您的 Gemini API Key\n\n輸入 /clear 清除 API Key\n輸入 /cancel 取消"
     )
@@ -96,12 +98,31 @@ async def handle_input_allergy_format(allergy: str):
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Help!")
+    help_text = (
+        "我是智能過敏菜單助理（AllergyMenu Assistant）\n"
+        "是一個能幫助你快速判斷餐廳菜色是否含有過敏原的智慧助手。\n"
+        "\n"
+        "✨ 主要功能：\n"
+        "上傳餐廳菜單圖片即可自動辨識文字（OCR）\n"
+        "由 AI 分析每道菜可能含有的過敏原\n"
+        "根據你個人的過敏資訊，分類成：\n"
+        "✅ 可食用\n"
+        "❌ 不可食用\n"
+        "⚠️ 需注意\n"
+        "\n"
+        "🔄 過敏資訊可隨時設定與更新\n"
+        "🗂 支援多重過敏源比對（如花生、乳製品、海鮮、蛋類等）\n"
+        "\n"
+        "🧠 本系統透過 OCR + LLM 組合分析，提供快速、直覺、個人化的菜單過敏判定。\n\n"
+        "請您用 /setallergy 設定您的過敏原，\n"
+        "並利用 /setapikey 設定您的 Gemini API Key，此API Key 會被加密儲存，並只用來處理您的請求，您可以隨時清除"
+    )
+    await update.message.reply_text(help_text)
 
 
 async def clear_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get("in_command"):
-        context.user_data["in_command"] == "setapitoken_command"
+        context.user_data["in_command"] == "setapikey_command"
         await set_api_key(update.effective_user.id, None)
         await update.message.reply_text("已清除 Gemini API Key")
     elif context.user_data.get("in_command"):
@@ -124,7 +145,7 @@ async def handle_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE
             text = text.replace(TELEGRAM_BOT_USERNAME, "")
 
     if context.user_data.get("in_command"):
-        if context.user_data["in_command"] == "setapitoken_command":
+        if context.user_data["in_command"] == "setapikey_command":
             context.user_data["in_command"] = None
             await set_api_key(update.effective_user.id, text.strip())
             await update.message.reply_text("已成功設定 Gemini API Key")
@@ -165,12 +186,25 @@ async def handle_image_message(update: Update, context: ContextTypes.DEFAULT_TYP
     image = await file.download_as_bytearray()
 
     if await get_api_key(update.effective_user.id) is None:
-        await update.message.reply_text("請先使用 /setapitoken 指令設定 Gemini API Key")
+        await update.message.reply_text("請先使用 /setapikey 指令設定 Gemini API Key")
         return
+    
+    reply_text = "已收到請求，請稍候..."
+
+    allergic_list = await get_allergies(update.effective_user.id)
+
+    if allergic_list:
+        reply_text += f"\n我會依據您的過敏原：（{'、'.join(allergic_list)}）給您餐點建議。"
+    else:
+        reply_text += "\n(目前尚未設定過敏原，可以用 /setallergy 進行設定)"
+
+    await update.message.reply_text(
+        reply_text, reply_to_message_id=update.message.message_id
+    )
 
     result = await send_image_analyze(
         image_bytes=image,
-        allergic_list=await get_allergies(update.effective_user.id),
+        allergic_list=allergic_list,
         platform_user_id=update.effective_user.id
     )
 
@@ -184,7 +218,8 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await update.message.reply_text(
             "Sorry, something went wrong.\n"
-            f"Update \n{update} \n\ncaused error\n{context.error}",
+            # f"Update \n{update} \n\ncaused error\n{context.error}",
+            f"\n{context.error}",
             reply_to_message_id=update.message.message_id,
         )
     except Exception:
@@ -195,14 +230,14 @@ def main() -> None:
     application = (
         ApplicationBuilder()
         .token(TELEGRAM_TOKEN)
+        .concurrent_updates(True)
         .post_init(init_db_pool)
         .post_shutdown(close_db_pool)
         .build()
     )
-
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("dev", dev_command))
-    application.add_handler(CommandHandler("setapitoken", setapitoken_command))
+    application.add_handler(CommandHandler("setapikey", setapikey_command))
     application.add_handler(CommandHandler("setallergy", setallergy_command))
     application.add_handler(CommandHandler("clear", clear_command))
     application.add_handler(CommandHandler("cancel", cancel_command))

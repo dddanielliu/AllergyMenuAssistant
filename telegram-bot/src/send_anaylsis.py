@@ -33,22 +33,15 @@ async def send_image_analyze(
             "metadata", json.dumps(metadata), content_type="application/json"
         )
 
-        async with session.post(url, data=form) as resp:
-            if resp.status == 200:
-                result = await resp.json()
-            else:
-                error_text = await resp.text()
-                raise Exception(
-                    f"Request failed with status code {resp.status}\n"
-                    f"Response body: {error_text}"
-                )
         try:
             async with session.post(url, data=form) as resp:
                 # This raises aiohttp.ClientResponseError for 400+ status codes
-                resp.raise_for_status()
+                if resp.status != 200:
+                    error_data = await resp.json()
+                    raise Exception(f"Analyze service failed with status code {resp.status}\n{error_data}")
 
                 result = await resp.json()
-                print(result)
+                logging.info(f"menu-analysis success:\n{result}")
 
         except aiohttp.ClientResponseError as e:
             logging.error(f"Request failed with status code: {e.status}\n{e.message}")
@@ -57,7 +50,7 @@ async def send_image_analyze(
             logging.error(f"Request failed with unexpected error: {e}")
             raise Exception(f"Request failed with unexpected error: {e}")
 
-    reply = result.get("llm_3_output", None)
+    reply = result.get("response", None)
 
     if not reply:
         raise Exception("No reply from LLM, result:\n" + str(result))

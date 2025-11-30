@@ -1,4 +1,4 @@
-name: AllergyMenuAssistant-dev
+name: dev-allergymenuassistant
 services:
   menu-analysis:
     build:
