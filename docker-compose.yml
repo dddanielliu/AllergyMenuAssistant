@@ -3,12 +3,13 @@ services:
     build:
       context: ./menu-analysis
       dockerfile: Dockerfile
-    DB_DATABASE: ${DB_DATABASE}
-    DB_USERNAME: ${DB_USERNAME}
-    DB_PASSWORD: ${DB_PASSWORD}
-    DB_HOSTNAME: ${DB_HOSTNAME}
-    DB_PORT: ${DB_PORT}
-    USER_GEMINI_API_ENCRYPTION_KEY: ${USER_GEMINI_API_ENCRYPTION_KEY}
+    environment:
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOSTNAME: ${DB_HOSTNAME}
+      DB_PORT: ${DB_PORT}
+      USER_GEMINI_API_ENCRYPTION_KEY: ${USER_GEMINI_API_ENCRYPTION_KEY}
 
   telegram-bot:
     build:

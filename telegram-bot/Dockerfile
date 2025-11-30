@@ -40,6 +40,9 @@ CMD ["/bin/bash"]
 
 FROM base AS prod
 
+WORKDIR ${PROJECT_PATH}
+
+COPY --from=python-base ${PROJECT_PATH} ${PROJECT_PATH}
 COPY . .
 
 WORKDIR ${PROJECT_PATH}

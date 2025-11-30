@@ -7,7 +7,8 @@ from typing import List, Union
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from .db_connection import close_db_pool, init_db_pool, get_db_pool
+from .db_connection import close_db_pool, get_db_pool, init_db_pool
+from .ocr import extract_raw_text
 from .user_data_handler import get_api_key
 
 # Use the provided logger configuration
@@ -59,18 +60,17 @@ async def analyze_menu(file: UploadFile = File(...), metadata: str = Form(...)):
     api_key = await get_api_key(platform, platform_user_id)
     if not api_key:
         raise Exception("No API key found for user")
+    
+    raw_text = await asyncio.to_thread(extract_raw_text, image_bytes)
 
-    # --- Placeholder for actual analysis logic ---
-    # In a real application, you would:
-    # 1. Use OCR to extract text from image_bytes.
-    # 2. Use an LLM to analyze the text against the allergic_list.
-    # 3. Generate a structured report.
-    # ---------------------------------------------
+    metadata_dict["raw_text"] = raw_text
+    logger.info(f"Extracted raw text: \n{raw_text}")
+
 
     # For now, return a test dictionary as requested.
     # The client code in send_anaylsis.py expects a key "llm_3_output".
     test_response = {
-        "llm_3_output": "This is a test response from the menu-analysis service.",
+        "llm_3_output": raw_text,
         "metadata": metadata_dict,
         "debug_info": {
             "received_allergies": allergic_list,

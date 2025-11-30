@@ -37,7 +37,7 @@ def _decrypt_key(encrypted_key: str) -> str | None:
         return None
 
 
-async def _get_user(platform: str, platform_user_id: str | int) -> int | None:
+async def _get_user(platform: str, platform_user_id: str) -> int | None:
     """
     Retrieves the internal ID of a user from the database.
     If the user does not exist, it creates a new entry and returns the new ID.
