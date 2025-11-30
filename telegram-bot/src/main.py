@@ -15,7 +15,7 @@ from telegram.ext import (
 
 from .db_connection import close_db_pool, init_db_pool
 from .send_anaylsis import send_image_analyze
-from .user_data_handler import get_allergies, set_api_key, get_api_key, update_allergies
+from .user_data_handler import get_allergies, get_api_key, set_api_key, update_allergies
 
 TELEGRAM_TOKEN: Final = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_BOT_USERNAME: Final = os.getenv("TELEGRAM_BOT_USERNAME")
@@ -188,13 +188,15 @@ async def handle_image_message(update: Update, context: ContextTypes.DEFAULT_TYP
     if await get_api_key(update.effective_user.id) is None:
         await update.message.reply_text("請先使用 /setapikey 指令設定 Gemini API Key")
         return
-    
+
     reply_text = "已收到請求，請稍候..."
 
     allergic_list = await get_allergies(update.effective_user.id)
 
     if allergic_list:
-        reply_text += f"\n我會依據您的過敏原：（{'、'.join(allergic_list)}）給您餐點建議。"
+        reply_text += (
+            f"\n我會依據您的過敏原：（{'、'.join(allergic_list)}）給您餐點建議。"
+        )
     else:
         reply_text += "\n(目前尚未設定過敏原，可以用 /setallergy 進行設定)"
 
@@ -205,7 +207,7 @@ async def handle_image_message(update: Update, context: ContextTypes.DEFAULT_TYP
     result = await send_image_analyze(
         image_bytes=image,
         allergic_list=allergic_list,
-        platform_user_id=update.effective_user.id
+        platform_user_id=update.effective_user.id,
     )
 
     await update.message.reply_text(

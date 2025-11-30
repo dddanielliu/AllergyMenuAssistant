@@ -25,6 +25,7 @@ _fernet = Fernet(fernet_key)
 
 # --- Helper Functions ---
 
+
 def _decrypt_key(encrypted_key: str) -> str | None:
     """
     Decrypts an API key using Fernet.
@@ -56,6 +57,7 @@ async def _get_user(platform: str, platform_user_id: str) -> int | None:
                 return user_id
             else:
                 return None
+
 
 async def get_api_key(platform: str, platform_user_id: str | int) -> str | None:
     """Retrieves and decrypts the user's API key from the database."""

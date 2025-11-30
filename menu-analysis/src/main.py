@@ -4,10 +4,10 @@ import logging
 from contextlib import asynccontextmanager
 from typing import List, Union
 
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException, status
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 
-from .db_connection import close_db_pool, get_db_pool, init_db_pool
+from .db_connection import close_db_pool, init_db_pool
 from .llm import generate_response
 from .ocr import extract_raw_text
 from .user_data_handler import get_api_key
@@ -72,7 +72,11 @@ async def analyze_menu(file: UploadFile = File(...), metadata: str = Form(...)):
 
     try:
         llms_response = await asyncio.to_thread(
-            generate_response, raw_text, allergic_list, api_key, (platform, platform_user_id)
+            generate_response,
+            raw_text,
+            allergic_list,
+            api_key,
+            (platform, platform_user_id),
         )
     except Exception as e:
         logging.error(f"Failed to generate response: {e}")

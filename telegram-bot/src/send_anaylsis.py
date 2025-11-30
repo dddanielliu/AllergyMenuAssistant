@@ -38,7 +38,9 @@ async def send_image_analyze(
                 # This raises aiohttp.ClientResponseError for 400+ status codes
                 if resp.status != 200:
                     error_data = await resp.json()
-                    raise Exception(f"Analyze service failed with status code {resp.status}\n{error_data}")
+                    raise Exception(
+                        f"Analyze service failed with status code {resp.status}\n{error_data}"
+                    )
 
                 result = await resp.json()
                 logging.info(f"menu-analysis success:\n{result}")

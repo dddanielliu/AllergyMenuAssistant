@@ -1,6 +1,7 @@
 import logging
-from google import genai
 from typing import List
+
+from google import genai
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ def call_llm1(menu_text: str, api_key: str):
         config=genai.types.GenerateContentConfig(
             system_instruction=system_prompt,
             temperature=0.3,
-        )
+        ),
     )
 
     return response.text or ""
@@ -55,7 +56,7 @@ def call_llm2(cleaned_menu_text: str, api_key: str):
         config=genai.types.GenerateContentConfig(
             system_instruction=system_prompt,
             temperature=0.3,
-        )
+        ),
     )
 
     return response.text or ""
@@ -79,7 +80,7 @@ def call_llm3(llm2_response: str, allergic_list: List[str], api_key: str):
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=(
-            f"我的過敏原:{allergic_list_str}\n" f"菜單以及過敏資訊:\n{llm2_response}"
+            f"我的過敏原:{allergic_list_str}\n菜單以及過敏資訊:\n{llm2_response}"
         ),
         config=genai.types.GenerateContentConfig(
             system_instruction=system_prompt,
@@ -90,9 +91,13 @@ def call_llm3(llm2_response: str, allergic_list: List[str], api_key: str):
     return response.text or ""
 
 
-def generate_response(menu_text: str, allergic_list: List[str], api_key: str, user_info: tuple[str, str]):
+def generate_response(
+    menu_text: str, allergic_list: List[str], api_key: str, user_info: tuple[str, str]
+):
     # menu_text = "好吃店家。豬肉 牛肉蓋飯 麻婆豆腐"
-    logging.info(f"[{user_info[0]}: {user_info[1]}] received allergic list:\n{allergic_list}\nmenu:\n{menu_text}")
+    logging.info(
+        f"[{user_info[0]}: {user_info[1]}] received allergic list:\n{allergic_list}\nmenu:\n{menu_text}"
+    )
     llm1_response = call_llm1(menu_text, api_key)
     logging.info(f"[{user_info[0]}: {user_info[1]}] LLM1:\n{llm1_response}")
     llm2_response = call_llm2(llm1_response, api_key)
