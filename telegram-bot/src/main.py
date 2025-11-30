@@ -24,6 +24,10 @@ logging.basicConfig(level=logging.INFO)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
+if not TELEGRAM_TOKEN or not TELEGRAM_BOT_USERNAME:
+    logger.error("TELEGRAM_TOKEN or TELEGRAM_BOT_USERNAME is not set")
+    exit(1)
+
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start_text = (
@@ -98,6 +102,7 @@ async def handle_input_allergy_format(allergy: str):
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["in_command"] = None
     help_text = (
         "我是智能過敏菜單助理（AllergyMenu Assistant）\n"
         "是一個能幫助你快速判斷餐廳菜色是否含有過敏原的智慧助手。\n"
