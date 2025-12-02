@@ -127,14 +127,15 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def clear_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get("in_command"):
-        context.user_data["in_command"] == "setapikey_command"
-        await set_api_key(update.effective_user.id, None)
-        await update.message.reply_text("已清除 Gemini API Key")
-    elif context.user_data.get("in_command"):
-        context.user_data["in_command"] == "setallergy_command"
-        await update_allergies(update.effective_user.id, [])
-        await update.message.reply_text("已清除過敏原")
-    context.user_data["in_command"] = None
+        if context.user_data["in_command"] == "setapikey_command":
+            await set_api_key(update.effective_user.id, None)
+            await update.message.reply_text("已清除 Gemini API Key")
+        elif context.user_data["in_command"] == "setallergy_command":
+            await update_allergies(update.effective_user.id, [])
+            await update.message.reply_text("已清除過敏原")
+        context.user_data["in_command"] = None
+    else:
+        await update.message.reply_text("目前沒有進行中的指令或狀態需要清除。\n若要清除 Gemini API Key，請先輸入 /setapikey\n若要清除過敏原，請先輸入 /setallergy")
 
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
