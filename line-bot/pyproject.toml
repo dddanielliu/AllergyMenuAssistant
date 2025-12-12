@@ -1,0 +1,14 @@
+[project]
+name = "telegram-bot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "aiohttp>=3.13.2",
+    "asyncpg>=0.31.0",
+    "cryptography>=46.0.3",
+    "fastapi>=0.124.3",
+    "line-bot-sdk>=3.21.0",
+    "uvicorn>=0.38.0",
+]

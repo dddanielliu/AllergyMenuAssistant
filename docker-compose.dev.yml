@@ -20,6 +20,18 @@ services:
     volumes:
       - ./telegram-bot:/telegram-bot/
 
+  line-bot:
+    build:
+      context: ./line-bot
+      dockerfile: Dockerfile
+      target: dev
+    env_file: .env
+    stdin_open: true
+    volumes:
+      - ./line-bot:/line-bot/
+    ports:
+      - "8080:8080"
+
   db:
     image: postgres:18-alpine
     environment:

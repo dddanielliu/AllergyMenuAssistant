@@ -6,6 +6,7 @@
 ![Python](https://img.shields.io/badge/Python-3.13%2B-blue)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED)
 ![Telegram Bot](https://img.shields.io/badge/Interface-Telegram%20Bot-2CA5E0)
+![LINE Bot](https://img.shields.io/badge/Interface-LINE%20Bot-00B900)
 ![Package Manager](https://img.shields.io/badge/uv-managed-purple)
 
 ## 專案簡介 (Introduction)
@@ -101,6 +102,15 @@ AllergyMenuAssistant
     │   ├── send_anaylsis.py    # 傳送分析結果邏輯
     │   └── user_data_handler.py
     └── uv.lock
+└── line-bot                    # [介面服務] 負責與使用者互動
+    ├── Dockerfile
+    ├── pyproject.toml
+    ├── src
+    │   ├── db_connection.py
+    │   ├── main.py             # Bot 啟動入口
+    │   ├── send_anaylsis.py    # 傳送分析結果邏輯
+    │   └── user_data_handler.py
+    └── uv.lock
 ```
 
 -----
@@ -109,7 +119,7 @@ AllergyMenuAssistant
 
   * **語言**: Python 3.13+
   * **套件管理**: `uv` (Fast Python package installer)
-  * **介面**: Telegram Bot API
+  * **介面**: Telegram Bot API, LINE Bot API
   * **AI/ML**:
       * OCR (Tesseract)
       * LLM (Gemini)
@@ -124,6 +134,7 @@ AllergyMenuAssistant
 
   * Docker & Docker Compose installed
   * Telegram Bot Token (From @BotFather)
+  * LINE Channel Access Token & Channel Secret (From LINE Developers Console)
   * LLM API Key (e.g., OPENAI\_API\_KEY)
 
 ### 1\. Clone 專案
@@ -140,6 +151,9 @@ cd AllergyMenuAssistant
 ```env
 TELEGRAM_BOT_TOKEN=Example-token
 TELEGRAM_BOT_USERNAME=@example
+
+LINE_CHANNEL_ACCESS_TOKEN=Example-token
+LINE_CHANNEL_SECRET=Example-secret
 
 DB_DATABASE=AllergyMenuAssistant
 DB_USERNAME=postgres

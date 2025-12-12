@@ -30,6 +30,25 @@ services:
       - db
       - menu-analysis
 
+  line-bot:
+    build:
+      context: ./line-bot
+      dockerfile: Dockerfile
+    environment:
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOSTNAME: ${DB_HOSTNAME}
+      DB_PORT: ${DB_PORT}
+      USER_GEMINI_API_ENCRYPTION_KEY: ${USER_GEMINI_API_ENCRYPTION_KEY}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - menu-analysis
+
   db:
     image: postgres:18-alpine
     environment:
