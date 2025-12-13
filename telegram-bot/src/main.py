@@ -10,6 +10,7 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     MessageHandler,
+    ConversationHandler,
     filters,
 )
 
@@ -28,6 +29,9 @@ if not TELEGRAM_TOKEN or not TELEGRAM_BOT_USERNAME:
     logger.error("TELEGRAM_TOKEN or TELEGRAM_BOT_USERNAME is not set")
     exit(1)
 
+# Conversation states
+SET_APIKEY_INPUT = 1
+SET_ALLERGY_INPUT = 2
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start_text = (
@@ -57,37 +61,41 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"{update.effective_user.first_name}，您好！\n\n{start_text}"
     )
 
+# ---- SET APIKEY CONVERSATION ----
 
-async def dev_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    update_dict = json.dumps(update.to_dict(), indent=2)
-    await update.message.reply_text(
-        f"Hello, {update.effective_user.first_name}!\n\n{update_dict}\n\n{context.user_data}\n\n{context.chat_data}\n\n{context.bot_data}"
-    )
-
-
-async def setapikey_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["in_command"] = "setapikey_command"
+async def setapikey_command_entry(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "請輸入您的 Gemini API Key\n\n輸入 /clear 清除 API Key\n輸入 /cancel 取消"
     )
+    return SET_APIKEY_INPUT
 
+async def setapikey_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text.strip()
+    await set_api_key(update.effective_user.id, text)
+    await update.message.reply_text("已成功設定 Gemini API Key")
+    return ConversationHandler.END
 
-async def setallergy_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["in_command"] = "setallergy_command"
-    if update.effective_user.id:
-        user_allergies = await get_allergies(update.effective_user.id)
-        await update.message.reply_text(
-            "請輸入您對什麼過敏，以逗號(,)分隔\n"
-            + (
-                f"目前已設定過敏原:\n{'、'.join(user_allergies)}\n"
-                if user_allergies
-                else ""
-            )
-            + "\n"
-            "輸入 /cancel 取消\n"
-            "輸入 /clear 清除"
-        )
+async def setapikey_clear(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await set_api_key(update.effective_user.id, None)
+    await update.message.reply_text("已清除 Gemini API Key")
+    return ConversationHandler.END
 
+async def setapikey_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("已取消設定")
+    return ConversationHandler.END
+
+# ---- SET ALLERGY CONVERSATION ----
+
+async def setallergy_command_entry(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_allergies = await get_allergies(update.effective_user.id)
+    await update.message.reply_text(
+        "請輸入您對什麼過敏，以逗號(,)分隔\n"
+        + (f"目前已設定過敏原:\n{'、'.join(user_allergies)}\n" if user_allergies else "")
+        + "\n"
+        "輸入 /cancel 取消\n"
+        "輸入 /clear 清除"
+    )
+    return SET_ALLERGY_INPUT
 
 async def handle_input_allergy_format(allergy: str):
     if allergy.strip():
@@ -100,9 +108,39 @@ async def handle_input_allergy_format(allergy: str):
     else:
         raise ValueError
 
+async def setallergy_receive(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    try:
+        allergies_list: List[str] = await handle_input_allergy_format(text)
+        await update_allergies(update.effective_user.id, allergies_list)
+        await update.message.reply_text(
+            f"已成功設定過敏原：\n{'、'.join(allergies_list)}\n"
+        )
+        return ConversationHandler.END
+    except ValueError:
+        user_allergies = await get_allergies(update.effective_user.id)
+        await update.message.reply_text(
+            "不好意思，您輸入的格式不正確\n"
+            "請輸入您對什麼過敏，以逗號(,)分隔\n"
+            + (f"目前已設定過敏原:\n{'、'.join(user_allergies)}\n" if user_allergies else "")
+            + "\n"
+            "輸入 /cancel 取消\n"
+            "輸入 /clear 清除"
+        )
+        return SET_ALLERGY_INPUT
+
+async def setallergy_clear(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update_allergies(update.effective_user.id, [])
+    await update.message.reply_text("已清除過敏原")
+    return ConversationHandler.END
+
+async def setallergy_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("已取消設定")
+    return ConversationHandler.END
+
+# ---- END CONVERSATION ----
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["in_command"] = None
     help_text = (
         "我是智能過敏菜單助理（AllergyMenu Assistant）\n"
         "是一個能幫助你快速判斷餐廳菜色是否含有過敏原的智慧助手。\n"
@@ -124,23 +162,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text(help_text)
 
-
-async def clear_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if context.user_data.get("in_command"):
-        if context.user_data["in_command"] == "setapikey_command":
-            await set_api_key(update.effective_user.id, None)
-            await update.message.reply_text("已清除 Gemini API Key")
-        elif context.user_data["in_command"] == "setallergy_command":
-            await update_allergies(update.effective_user.id, [])
-            await update.message.reply_text("已清除過敏原")
-        context.user_data["in_command"] = None
-    else:
-        await update.message.reply_text("目前沒有進行中的指令或狀態需要清除。\n若要清除 Gemini API Key，請先輸入 /setapikey\n若要清除過敏原，請先輸入 /setallergy")
-
-
-async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["in_command"] = None
-
+async def dev_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    update_dict = json.dumps(update.to_dict(), indent=2)
+    await update.message.reply_text(
+        f"Hello, {update.effective_user.first_name}!\n\n{update_dict}\n\n{context.user_data}\n\n{context.chat_data}\n\n{context.bot_data}"
+    )
 
 async def handle_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_type: str = update.message.chat.type
@@ -150,45 +176,12 @@ async def handle_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         if TELEGRAM_BOT_USERNAME in text:
             text = text.replace(TELEGRAM_BOT_USERNAME, "")
 
-    if context.user_data.get("in_command"):
-        if context.user_data["in_command"] == "setapikey_command":
-            context.user_data["in_command"] = None
-            await set_api_key(update.effective_user.id, text.strip())
-            await update.message.reply_text("已成功設定 Gemini API Key")
-        elif context.user_data["in_command"] == "setallergy_command":
-            try:
-                allergies_list: List[str] = await handle_input_allergy_format(text)
-                await update_allergies(update.effective_user.id, allergies_list)
-                await update.message.reply_text(
-                    f"已成功設定過敏原：\n{'、'.join(allergies_list)}\n"
-                )
-                context.user_data["in_command"] = None
-            except ValueError:
-                user_allergies = await get_allergies(update.effective_user.id)
-                await update.message.reply_text(
-                    "不好意思，您輸入的格式不正確\n"
-                    "請輸入您對什麼過敏，以逗號(,)分隔\n"
-                    + (
-                        f"目前已設定過敏原:\n{'、'.join(user_allergies)}\n"
-                        if user_allergies
-                        else ""
-                    )
-                    + "\n"
-                    "輸入 /cancel 取消\n"
-                    "輸入 /clear 清除"
-                )
-        return
-
     if text:
         await update.message.reply_text(text)
 
-
 async def handle_image_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file_id = update.message.photo[-1].file_id
-    # fetch photo
     file = await context.bot.get_file(file_id)
-
-    # save to python bytes
     image = await file.download_as_bytearray()
 
     if await get_api_key(update.effective_user.id) is None:
@@ -196,7 +189,6 @@ async def handle_image_message(update: Update, context: ContextTypes.DEFAULT_TYP
         return
 
     reply_text = "已收到請求，請稍候..."
-
     allergic_list = await get_allergies(update.effective_user.id)
 
     if allergic_list:
@@ -220,19 +212,16 @@ async def handle_image_message(update: Update, context: ContextTypes.DEFAULT_TYP
         result, reply_to_message_id=update.message.message_id
     )
 
-
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.error(f"Update {update} caused error {context.error}")
     try:
         await update.message.reply_text(
             "Sorry, something went wrong.\n"
-            # f"Update \n{update} \n\ncaused error\n{context.error}",
             f"\n{context.error}",
             reply_to_message_id=update.message.message_id,
         )
     except Exception:
         pass
-
 
 def main() -> None:
     application = (
@@ -245,27 +234,53 @@ def main() -> None:
         .post_shutdown(close_db_pool)
         .build()
     )
+
+    # Conversation handler for /setapikey
+    setapikey_conv = ConversationHandler(
+        entry_points=[CommandHandler("setapikey", setapikey_command_entry)],
+        states={
+            SET_APIKEY_INPUT: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, setapikey_receive
+                ),
+                CommandHandler("clear", setapikey_clear),
+                CommandHandler("cancel", setapikey_cancel),
+            ],
+        },
+        fallbacks=[CommandHandler("cancel", setapikey_cancel)],
+    )
+    application.add_handler(setapikey_conv)
+
+    # Conversation handler for /setallergy
+    setallergy_conv = ConversationHandler(
+        entry_points=[CommandHandler("setallergy", setallergy_command_entry)],
+        states={
+            SET_ALLERGY_INPUT: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, setallergy_receive
+                ),
+                CommandHandler("clear", setallergy_clear),
+                CommandHandler("cancel", setallergy_cancel),
+            ],
+        },
+        fallbacks=[CommandHandler("cancel", setallergy_cancel)],
+    )
+    application.add_handler(setallergy_conv)
+
     application.add_handler(CommandHandler("start", start_command))
-    application.add_handler(CommandHandler("dev", dev_command))
-    application.add_handler(CommandHandler("setapikey", setapikey_command))
-    application.add_handler(CommandHandler("setallergy", setallergy_command))
-    application.add_handler(CommandHandler("clear", clear_command))
-    application.add_handler(CommandHandler("cancel", cancel_command))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("dev", dev_command))
 
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message)
     )
-
     application.add_handler(
         MessageHandler(filters.PHOTO & ~filters.COMMAND, handle_image_message)
     )
-
     application.add_error_handler(error)
 
     logging.info("Starting bot...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
-
 
 if __name__ == "__main__":
     main()
