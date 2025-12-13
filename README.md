@@ -93,22 +93,22 @@ AllergyMenuAssistant
 │   │   ├── ocr.py              # OCR 影像處理
 │   │   └── user_data_handler.py
 │   └── uv.lock                 # uv 套件鎖定檔
-└── telegram-bot                # [介面服務] 負責與使用者互動
-    ├── Dockerfile
-    ├── pyproject.toml
-    ├── src
-    │   ├── db_connection.py
-    │   ├── main.py             # Bot 啟動入口
-    │   ├── send_anaylsis.py    # 傳送分析結果邏輯
-    │   └── user_data_handler.py
-    └── uv.lock
+├── telegram-bot                # [介面服務] 負責與使用者互動
+│   ├── Dockerfile
+│   ├── pyproject.toml
+│   ├── src
+│   │   ├── db_connection.py
+│   │   ├── main.py             # Bot 啟動入口
+│   │   ├── send_anaylsis.py    # 傳送進行分析
+│   │   └── user_data_handler.py
+│   └── uv.lock
 └── line-bot                    # [介面服務] 負責與使用者互動
     ├── Dockerfile
     ├── pyproject.toml
     ├── src
     │   ├── db_connection.py
     │   ├── main.py             # Bot 啟動入口
-    │   ├── send_anaylsis.py    # 傳送分析結果邏輯
+    │   ├── send_anaylsis.py    # 傳送進行分析
     │   └── user_data_handler.py
     └── uv.lock
 ```
