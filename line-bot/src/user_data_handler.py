@@ -130,7 +130,7 @@ async def update_allergies(user_id: str | int, allergies: List[str]) -> None:
                 )
 
 
-async def set__api_key(user_id: str | int, api_key: str | None) -> None:
+async def set_api_key(user_id: str | int, api_key: str | None) -> None:
     """Set or delete a user's API key in the database. The API key is encrypted before storing."""
     user_id = str(user_id)
     internal_user_id = await _get_or_create_user(user_id)
@@ -171,3 +171,20 @@ async def get_api_key(user_id: str | int) -> str | None:
         if encrypted_key:
             return _decrypt_key(encrypted_key)
         return None
+
+
+async def delete_user(platform_user_id: str | int) -> None:
+    """Deletes a user and cascades delete the user's keys and allergies.
+
+    This deletes the database row from the `users` table matching the platform
+    and the given platform user id. The DB schema includes `ON DELETE CASCADE`
+    so related rows will be removed automatically.
+    """
+    platform_user_id = str(platform_user_id)
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "DELETE FROM users WHERE platform = $1 AND platform_user_id = $2",
+            PLATFORM,
+            platform_user_id,
+        )

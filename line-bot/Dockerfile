@@ -47,4 +47,4 @@ COPY . .
 
 WORKDIR ${PROJECT_PATH}
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD [".venv/bin/python", "-m", "src.main"]
