@@ -293,7 +293,7 @@ async def _process_image_message(user_id, message_id, reply_token=None):
     reply_text = "已收到請求，請稍候..."
     if allergies_list:
         reply_text += (
-            f"\n我會依據您的過敏原：({'、'.join(allergies_list)})給您餐點建議。"
+            f"\n我會依據您的過敏原：（{'、'.join(allergies_list)}）給您餐點建議。"
         )
     else:
         reply_text += "\n(目前尚未設定過敏原，可以用 /setallergy 進行設定)"
