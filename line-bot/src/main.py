@@ -198,7 +198,7 @@ async def handle_text_message(event):
             else:
                 allergies = [a.strip() for a in text.split(",") if a.strip()]
                 await update_allergies(user_id, allergies)
-                reply_text = f"已成功設定過敏原：\n{', '.join(allergies)}"
+                reply_text = f"已成功設定過敏原：\n{'、'.join(allergies)}"
 
     # Commands
     elif text.lower() == "/setapikey":
