@@ -99,7 +99,7 @@ AllergyMenuAssistant
 │   ├── src
 │   │   ├── db_connection.py
 │   │   ├── main.py             # Bot 啟動入口
-│   │   ├── send_anaylsis.py    # 傳送進行分析
+│   │   ├── send_analysis.py    # 傳送進行分析
 │   │   └── user_data_handler.py
 │   └── uv.lock
 └── line-bot                    # [介面服務] 負責與使用者互動
