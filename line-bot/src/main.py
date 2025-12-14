@@ -32,7 +32,7 @@ from linebot.v3.webhooks import (
 )
 
 from .db_connection import close_db_pool, init_db_pool
-from .send_anaylsis import send_image_analyze
+from .send_analysis import send_image_analyze
 from .user_data_handler import (
     delete_user,
     get_allergies,
