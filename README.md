@@ -64,30 +64,44 @@ This project follows a microservices architecture and is mainly divided into:
 * `line-bot` (user interface service)
 
 ```
+Here’s the English translation of your project structure:
+
+```
 AllergyMenuAssistant
-├── Dockerfile
-├── README.md
+├── Dockerfile                  # Root Docker configuration
+├── README.md                   # Project documentation
 ├── database
-│   └── init.sql
-├── docker-compose.dev.yml
-├── docker-compose.yml
-├── menu-analysis
+│   └── init.sql                # Database initialization script
+├── docker-compose.dev.yml      # Development environment Docker Compose
+├── docker-compose.yml          # Production environment Docker Compose
+├── menu-analysis               # [Core Service] Handles OCR and LLM analysis
+│   ├── Dockerfile
+│   ├── pyproject.toml
+│   ├── src
+│   │   ├── db_connection.py    # Database connection
+│   │   ├── llm.py              # LLM agent logic implementation
+│   │   ├── main.py             # Service entry point
+│   │   ├── ocr.py              # OCR image processing
+│   │   └── user_data_handler.py
+│   └── uv.lock                 # uv package lock file
+├── telegram-bot                # [Interface Service] Handles user interaction
+│   ├── Dockerfile
+│   ├── pyproject.toml
 │   ├── src
 │   │   ├── db_connection.py
-│   │   ├── llm.py
-│   │   ├── main.py
-│   │   ├── ocr.py
+│   │   ├── main.py             # Bot entry point
+│   │   ├── send_analysis.py    # Send requests for analysis
 │   │   └── user_data_handler.py
-├── telegram-bot
-│   ├── src
-│   │   ├── main.py
-│   │   ├── send_analysis.py
-│   │   └── user_data_handler.py
-└── line-bot
+│   └── uv.lock
+└── line-bot                    # [Interface Service] Handles user interaction
+    ├── Dockerfile
+    ├── pyproject.toml
     ├── src
-    │   ├── main.py
-    │   ├── send_analysis.py
+    │   ├── db_connection.py
+    │   ├── main.py             # Bot entry point
+    │   ├── send_analysis.py    # Send requests for analysis
     │   └── user_data_handler.py
+    └── uv.lock
 ```
 
 ---
