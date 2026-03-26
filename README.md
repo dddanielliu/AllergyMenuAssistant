@@ -64,9 +64,6 @@ This project follows a microservices architecture and is mainly divided into:
 * `line-bot` (user interface service)
 
 ```
-Here’s the English translation of your project structure:
-
-```
 AllergyMenuAssistant
 ├── Dockerfile                  # Root Docker configuration
 ├── README.md                   # Project documentation
